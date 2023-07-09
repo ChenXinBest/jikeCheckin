@@ -9,17 +9,23 @@ passwd = os.environ.get("jike_password")
 
 class jikeCheckin():
     proxies = {
-        "http":"http://127.0.0.1:10809",
-        "https":"http://127.0.0.1:10809"
+        # "http":"http://127.0.0.1:10809",
+        # "https":"http://127.0.0.1:10809"
     }
 
     session = requests.session()
 
     def getResponse(self,url):
-        return self.session.get(url,proxies=self.proxies)
+        if len(self.proxies)>0:
+            return self.session.get(url,proxies=self.proxies)
+        else:
+            return self.session.get(url)
 
     def postResponse(self,url,data={}):
-        return self.session.post(url=url,data=data,proxies=self.proxies)
+        if len(self.proxies)>0:
+            return self.session.post(url=url,data=data,proxies=self.proxies)
+        else:
+            return self.session.post(url=url,data=data)
 
     def readResponse(self,response):
         response.encoding = response.apparent_encoding
