@@ -49,16 +49,16 @@ class jikeCheckin():
         return result
 
     def run(self):
-        result = False
+        result = None
         flag=self.login()
         if flag is not None and flag:
             print("登录成功！正在签到……")
             result = self.checkIn()
             if result is not None and result["ret"] == 1:
                 print("签到成功！成功信息如下：")
-                result = True
             else:
                 print("签到失败！失败原因如下：")
+            print(result["msg"])
         else:
             print("登录失败")
         return result
