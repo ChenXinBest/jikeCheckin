@@ -16,3 +16,8 @@
 email = os.environ.get("jike_email")
 passwd = os.environ.get("jike_password")
 ```
+
+# Gotify设置
+在action中添加secrets
+gotify_host:http://gotify地址
+gotify_token:gotify app 密钥
