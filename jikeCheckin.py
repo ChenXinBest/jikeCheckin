@@ -2,10 +2,13 @@
 import requests
 import json
 import os
+from gotify import Gotify
 
 # 读取用户名和密码
 email = os.environ.get("jike_email")
 passwd = os.environ.get("jike_password")
+gotify_host = os.environ.get("gotify_host")
+gotify_token = os.environ.get("gotify_token")
 
 class jikeCheckin():
     proxies = {
@@ -14,6 +17,10 @@ class jikeCheckin():
     }
 
     session = requests.session()
+
+    gotifyClient = None
+    if gotify_token is not None and gotify_host is not None:
+        gotifyClient = Gotify(base_url=gotify_host,app_token=gotify_token)
 
     def getResponse(self,url):
         if len(self.proxies)>0:
@@ -51,16 +58,29 @@ class jikeCheckin():
     def run(self):
         result = None
         flag=self.login()
+        gotify_text = ''
+        gotify_title =''
         if flag is not None and flag:
             print("登录成功！正在签到……")
             result = self.checkIn()
             if result is not None and result["ret"] == 1:
+                gotify_title="签到成功！"
                 print("签到成功！成功信息如下：")
             else:
+                gotify_title="签到失败"
                 print("签到失败！失败原因如下：")
             print(result["msg"])
+            gotify_text=result["msg"]
         else:
+            gotify_title="登录失败"
+            gotify_text="登陆失败！"
             print("登录失败")
+        if self.gotifyClient is not None:
+            self.gotifyClient.create_message(
+                title=gotify_title,
+                message=gotify_text,
+                priority=0,
+            )
         return result
 
 
