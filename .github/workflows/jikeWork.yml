@@ -25,5 +25,7 @@ jobs:
         env:
           jike_email: ${{ secrets.jike_email }}
           jike_password: ${{ secrets.jike_password }}
+          gotify_host: ${{ secrets.gotify_host }}
+          gotify_token: ${{ secrets.gotify_token }}
         run: |
           python3 ../jikeCheckin/jikeCheckin.py
