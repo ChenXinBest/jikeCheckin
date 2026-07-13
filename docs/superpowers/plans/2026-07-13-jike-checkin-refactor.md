@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Python 版本：≥ 3.10（Action 锁 3.10.12，本地脚本提示用户安装 3.10+）。
-- 运行时依赖（写入 `requirements.txt`）：`requests>=2.28`、`gotify>=0.6`、`python-dotenv>=1.0`。
+- 运行时依赖（写入 `requirements.txt`）：`requests>=2.28`、`gotify==0.5.0`、`python-dotenv>=1.0`。
 - 开发依赖（写入 `requirements-dev.txt`）：`-r requirements.txt`、`pytest>=7.0`、`pytest-mock>=3.10`。
 - 不创建虚拟环境（保持简单）。
 - `.github/workflows/jikeWork.yml` 一字不改；入口路径仍是根目录 `jikeCheckin.py`。
@@ -1078,15 +1078,15 @@ Expected: 当前含 `requests`、`gotify`（可能还有其他）。
 
 - [ ] **Step 2: 改写 `requirements.txt`**
 
-写入 `requirements.txt`（完整覆盖）：
+写入 `requirements.txt`（完整覆盖，**清理 PyInstaller / pymongo / xmltodict / httpx 等历史残留**）：
 
 ```
 requests>=2.28
-gotify>=0.6
+gotify==0.5.0
 python-dotenv>=1.0
 ```
 
-> 注意：保留原来已有的依赖项（不只是上面三条）。先看 Step 1 的输出，把现有依赖项原样保留，再追加 `python-dotenv>=1.0`。
+> 决策：仅保留签到真正用到的运行时依赖。清理掉原文件中 `pyinstaller` / `pyinstall` / `pymongo` / `xmltodict` / `anyio` / `httpcore` / `httpx` / `h11` / `sniffio` / `exceptiongroup` / `pywin32-ctypes` / `pefile` / `altgraph` / `dnspython` / `certifi` / `charset-normalizer` / `idna` / `urllib3` 等无关项。`gotify` 锁回原项目使用版本 `0.5.0`（不是 `>=0.6`）。
 
 - [ ] **Step 3: 创建 `requirements-dev.txt`**
 
