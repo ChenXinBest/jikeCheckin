@@ -1,0 +1,32 @@
+name: Jike Checkin
+
+on:
+  schedule:
+    - cron: '30 16 * * *'  # UTC 16:30 = 北京时间 00:30
+  workflow_dispatch:        # 支持手动触发
+
+jobs:
+  checkin:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Run checkin
+        env:
+          JIKE_EMAIL: ${{ secrets.JIKE_EMAIL }}
+          JIKE_PASSWORD: ${{ secrets.JIKE_PASSWORD }}
+          GOTIFY_HOST: ${{ secrets.GOTIFY_HOST }}
+          GOTIFY_TOKEN: ${{ secrets.GOTIFY_TOKEN }}
+          LOG_LEVEL: INFO
+        run: python main.py
