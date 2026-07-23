@@ -70,7 +70,7 @@ def run(config):
         config (dict): 配置字典
     
     Returns:
-        bool: 签到成功返回 True，失败返回 False
+        bool: 签到成功返回 True（包括已签到），失败返回 False
     """
     client = JikeCheckin(config["jike_email"], config["jike_password"])
     
@@ -87,9 +87,9 @@ def run(config):
     
     logger.info("登录成功，正在签到...")
     result = client.checkin()
+    msg = result.get("msg", "")
     
-    if result.get("ret") == 1:
-        msg = result.get("msg", "签到成功")
+    if result.get("ret") == 1 or "已经签到" in msg:
         logger.info(f"签到成功：{msg}")
         send_notification(
             "签到成功",
@@ -99,7 +99,6 @@ def run(config):
         )
         return True
     else:
-        msg = result.get("msg", "签到失败")
         logger.warning(f"签到失败：{msg}")
         send_notification(
             "签到失败",
