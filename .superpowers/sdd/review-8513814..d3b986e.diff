@@ -1,0 +1,10 @@
+# Review package: 8513814..d3b986e
+
+## Commits
+d3b986e chore: 绮剧畝 requirements.txt锛屼粎淇濈暀蹇呰渚濊禆
+
+## Files changed
+ requirements.txt | Bin 786 -> 52 bytes  1 file changed, 0 insertions(+), 0 deletions(-)
+
+## Diff
+diff --git a/requirements.txt b/requirements.txt index f134ca5..dcdd4cb 100644 Binary files a/requirements.txt and b/requirements.txt differ

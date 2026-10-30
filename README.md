@@ -64,7 +64,11 @@
 | JIKE_PASSWORD | 极客云密码 | 是 | - |
 | GOTIFY_HOST | Gotify 服务器地址 | 否 | - |
 | GOTIFY_TOKEN | Gotify 应用 Token | 否 | - |
+| JIKE_PROXY | 代理地址，如 `http://127.0.0.1:7890`（直连失败时才需要） | 否 | 直连 |
 | LOG_LEVEL | 日志级别（DEBUG/INFO/WARNING/ERROR） | 否 | INFO |
+
+> 提示：站点对非浏览器请求会返回 `403 Forbidden`，脚本使用 [fake-useragent](https://pypi.org/project/fake-useragent/) 随机生成真实的桌面端 User-Agent（依赖已写入 `requirements.txt`）；
+> 若日志中出现 403，可尝试配置 `JIKE_PROXY` 或标准 `HTTPS_PROXY` 环境变量。
 
 ## 日志输出示例
 

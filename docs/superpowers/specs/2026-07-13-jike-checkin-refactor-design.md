@@ -135,7 +135,8 @@ class GotifyNotifier:
 2. 签到：仅 1 次。成功发"签到成功"通知；失败（`ret != 1`）发"签到失败"通知。
 3. Gotify 推送失败**不重试**，仅日志 ERROR，不影响退出码判定。
 4. 返回 `RunResult(success: bool, message: str)`；`message` 包含人类可读原因。
-5. 退出码：成功 0，业务失败 1，配置错误 2。
+5. 配置错误（`ConfigError`）在 `service.run()` 内部捕获并转为 `RunResult(success=False, message=...)`，不向上抛出。
+6. 退出码：成功 0，业务或配置失败 1。
 
 **对外接口**：
 
@@ -321,7 +322,7 @@ Action 现有 step 是 `pip3 install -r requirements.txt`，新依赖 `python-do
 
 - 本地版从"改源码"改成"复制 `.env.example` 到 `.env` → 填密钥 → 双击 `run.bat` / `./run.sh`"。
 - 删掉 README 中"将下述代码注释"的旧段落。
-- 新增"故障排查"：日志在 `logs/jike_checkin.log`，退出码含义（0 成功 / 1 业务失败 / 2 配置错误）。
+- 新增"故障排查"：日志在 `logs/jike_checkin.log`，退出码含义（0 成功 / 1 业务或配置失败）。
 - GitHub Action 段不变。
 
 ## 12. 不在范围内（YAGNI）

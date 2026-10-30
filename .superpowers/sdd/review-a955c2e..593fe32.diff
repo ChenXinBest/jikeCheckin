@@ -1,0 +1,10 @@
+# Review package: a955c2e..593fe32
+
+## Commits
+593fe32 feat: 娣诲姞閫氱煡妯″潡 notify.py
+
+## Files changed
+ notify.py | 35 +++++++++++++++++++++++++++++++++++  1 file changed, 35 insertions(+)
+
+## Diff
+diff --git a/notify.py b/notify.py new file mode 100644 index 0000000..875b6e7 --- /dev/null +++ b/notify.py @@ -0,0 +1,35 @@ +import logging +from gotify import Gotify + +logger = logging.getLogger(__name__) + + +def send_notification(title, message, gotify_host, gotify_token): +    """ +    鍙戦€?Gotify 閫氱煡銆?+     +    Args: +        title (str): 閫氱煡鏍囬 +        message (str): 閫氱煡鍐呭 +        gotify_host (str|None): Gotify 鏈嶅姟鍣ㄥ湴鍧€ +        gotify_token (str|None): Gotify 搴旂敤 Token +     +    Returns: +        bool: 鍙戦€佹垚鍔熻繑鍥?True锛屾湭閰嶇疆鎴栧け璐ヨ繑鍥?False +    """ +    if not gotify_host or not gotify_token: +        logger.debug("Gotify 鏈厤缃紝璺宠繃閫氱煡") +        return False +     +    try: +        client = Gotify(base_url=gotify_host, app_token=gotify_token) +        client.create_message( +            title=title, +            message=message, +            priority=0, +        ) +        logger.info("閫氱煡鍙戦€佹垚鍔?) +        return True +    except Exception as e: +        logger.error(f"閫氱煡鍙戦€佸け璐ワ細{e}") +        return False

@@ -1,0 +1,10 @@
+# Review package: 08f01ca..8513814
+
+## Commits
+8513814 chore: 娣诲姞 .env.example 閰嶇疆妯℃澘
+
+## Files changed
+ .env.example | 11 +++++++++++  1 file changed, 11 insertions(+)
+
+## Diff
+diff --git a/.env.example b/.env.example new file mode 100644 index 0000000..07cde0a --- /dev/null +++ b/.env.example @@ -0,0 +1,11 @@ +# 鏋佸浜戣处鍙烽厤缃紙蹇呭～锛?+JIKE_EMAIL=your_email@example.com +JIKE_PASSWORD=your_password + +# Gotify 閫氱煡閰嶇疆锛堝彲閫夛級 +GOTIFY_HOST=https://gotify.example.com +GOTIFY_TOKEN=your_app_token + +# 鏃ュ織绾у埆锛堝彲閫夛紝榛樿 INFO锛?+# 鍙€夊€硷細DEBUG, INFO, WARNING, ERROR +LOG_LEVEL=INFO
