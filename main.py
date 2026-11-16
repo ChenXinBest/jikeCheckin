@@ -1,8 +1,12 @@
 import logging
 import sys
+import time
+
 import requests
+
 from config import get_config
-from notify import send_notification
+from notify import send_notifications
+from traffic import parse_traffic
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +71,23 @@ def get_user_agent(max_attempts=10):
 
     logger.info("使用默认 User-Agent")
     return FALLBACK_USER_AGENT
+
+
+def format_elapsed(seconds):
+    """
+    格式化执行用时。
+
+    Args:
+        seconds (float): 秒数
+
+    Returns:
+        str: 如 "3.4s"、"1m12s"
+    """
+    seconds = max(float(seconds), 0.0)
+    if seconds < 60:
+        return f"{seconds:.1f}s"
+    minutes, rest = divmod(int(seconds), 60)
+    return f"{minutes}m{rest}s"
 
 
 def setup_logging(level_name):
@@ -157,7 +178,7 @@ class JikeCheckin:
     def checkin(self):
         """
         执行签到。
-        
+
         Returns:
             dict: 签到结果，包含 ret 和 msg 字段
         """
@@ -174,13 +195,70 @@ class JikeCheckin:
             logger.error(f"签到请求失败：{e}")
             return {"ret": 0, "msg": str(e)}
 
+    def get_account_traffic(self):
+        """
+        获取账户面板中的流量信息（登录后访问 /user 页面解析）。
 
-def run(config):
+        Returns:
+            str|None: 形如 "1.5GB" 的流量字符串，获取失败返回 None
+        """
+        try:
+            response = self.session.get(
+                f"{self.BASE_URL}/user",
+                headers={
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Referer": f"{self.BASE_URL}/user",
+                    # 页面请求不是 XHR，去掉该头避免返回非 HTML 内容
+                    "X-Requested-With": None,
+                },
+                timeout=15,
+            )
+        except Exception as e:
+            logger.warning(f"获取流量信息失败：{e}")
+            return None
+
+        if response.status_code != 200:
+            logger.warning(f"获取流量信息失败：HTTP {response.status_code}")
+            return None
+
+        response.encoding = response.apparent_encoding or response.encoding
+        return parse_traffic(response.text)
+
+
+def notify(config, success, title, message, traffic="0MB", started_at=None):
+    """
+    发送通知（各渠道独立判断配置完整性，配置完整的才会收到）。
+
+    Args:
+        config (dict): 配置字典
+        success (bool): 本次签到是否成功
+        title (str): Gotify 标题
+        message (str): Gotify 正文
+        traffic (str): 获得的流量，如 "666MB"
+        started_at (float|None): 脚本开始时间戳
+    """
+    elapsed = format_elapsed(time.time() - started_at) if started_at else "0s"
+    sent = send_notifications(
+        config,
+        success=success,
+        title=title,
+        message=message,
+        traffic=traffic,
+        elapsed=elapsed,
+    )
+    if sent:
+        logger.info(f"通知发送成功：{'、'.join(sent)}")
+    else:
+        logger.info("未配置可用的通知渠道，跳过通知")
+
+
+def run(config, started_at=None):
     """
     执行签到流程。
 
     Args:
         config (dict): 配置字典
+        started_at (float|None): 脚本开始时间戳，用于统计执行用时
 
     Returns:
         bool: 签到成功返回 True（包括已签到），失败返回 False
@@ -194,11 +272,12 @@ def run(config):
     logger.info("正在登录...")
     if not client.login():
         logger.error("登录失败")
-        send_notification(
-            "登录失败",
-            "极客云签到登录失败，请检查账号密码或网络/代理配置",
-            config.get("gotify_host"),
-            config.get("gotify_token"),
+        notify(
+            config,
+            success=False,
+            title="登录失败",
+            message="极客云签到登录失败，请检查账号密码或网络/代理配置",
+            started_at=started_at,
         )
         return False
     
@@ -208,26 +287,57 @@ def run(config):
     
     if result.get("ret") == 1 or "已经签到" in msg:
         logger.info(f"签到成功：{msg}")
-        send_notification(
-            "签到成功",
-            msg,
-            config.get("gotify_host"),
-            config.get("gotify_token"),
+        notify(
+            config,
+            success=True,
+            title="签到成功",
+            message=msg,
+            traffic=resolve_traffic(client, msg),
+            started_at=started_at,
         )
         return True
     else:
         logger.warning(f"签到失败：{msg}")
-        send_notification(
-            "签到失败",
-            msg,
-            config.get("gotify_host"),
-            config.get("gotify_token"),
+        notify(
+            config,
+            success=False,
+            title="签到失败",
+            message=msg,
+            started_at=started_at,
         )
         return False
 
 
+def resolve_traffic(client, message):
+    """
+    解析本次签到获得的流量。
+
+    优先从签到消息中解析；消息里没有则回退到账户面板的流量信息。
+
+    Args:
+        client (JikeCheckin): 已登录的客户端
+        message (str): 签到返回消息
+
+    Returns:
+        str: 形如 "666MB" 的流量字符串，无法获取时返回 "0MB"
+    """
+    traffic = parse_traffic(message)
+    if traffic:
+        logger.info(f"获得流量：{traffic}")
+        return traffic
+
+    traffic = client.get_account_traffic()
+    if traffic:
+        logger.warning(f"签到消息未包含流量，改用账户流量：{traffic}")
+        return traffic
+
+    logger.warning("未能获取流量信息，通知中按 0MB 展示")
+    return "0MB"
+
+
 def main():
     """主入口函数。"""
+    started_at = time.time()
     config = get_config()
     setup_logging(config["log_level"])
     
@@ -236,7 +346,7 @@ def main():
     max_retries = 3
     for attempt in range(1, max_retries + 1):
         logger.info(f"第 {attempt}/{max_retries} 次尝试")
-        if run(config):
+        if run(config, started_at=started_at):
             logger.info("签到完成")
             return
         if attempt < max_retries:

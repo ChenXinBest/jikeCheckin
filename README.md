@@ -6,6 +6,8 @@
 
 - ✅ 自动登录签到
 - ✅ 支持 Gotify 通知
+- ✅ 支持 WXPUSH 通知（微信推送）
+- ✅ 多渠道通知：配置完整的渠道都会收到
 - ✅ 本地运行 + GitHub Actions 定时任务
 - ✅ 结构化日志输出
 - ✅ 失败自动重试（最多 3 次）
@@ -23,6 +25,9 @@
      - `JIKE_PASSWORD`：极客云密码
      - `GOTIFY_HOST`：Gotify 服务器地址（可选）
      - `GOTIFY_TOKEN`：Gotify 应用 Token（可选）
+     - `WXPUSH_BASE_URL`：WXPUSH 推送地址（可选，使用该渠道时必填）
+     - `WXPUSH_USERID`：WXPUSH 用户 ID（可选）
+     - `WXPUSH_TEMPLATE_ID`：WXPUSH 模板 ID（可选）
 
 3. 运行签到
    - 手动触发：Actions → Jike Checkin → Run workflow
@@ -64,11 +69,32 @@
 | JIKE_PASSWORD | 极客云密码 | 是 | - |
 | GOTIFY_HOST | Gotify 服务器地址 | 否 | - |
 | GOTIFY_TOKEN | Gotify 应用 Token | 否 | - |
+| WXPUSH_BASE_URL | WXPUSH 推送地址（使用该渠道时必填） | 否 | - |
+| WXPUSH_USERID | WXPUSH 用户 ID | 否 | - |
+| WXPUSH_TEMPLATE_ID | WXPUSH 模板 ID | 否 | - |
 | JIKE_PROXY | 代理地址，如 `http://127.0.0.1:7890`（直连失败时才需要） | 否 | 直连 |
 | LOG_LEVEL | 日志级别（DEBUG/INFO/WARNING/ERROR） | 否 | INFO |
 
 > 提示：站点对非浏览器请求会返回 `403 Forbidden`，脚本使用 [fake-useragent](https://pypi.org/project/fake-useragent/) 随机生成真实的桌面端 User-Agent（依赖已写入 `requirements.txt`）；
 > 若日志中出现 403，可尝试配置 `JIKE_PROXY` 或标准 `HTTPS_PROXY` 环境变量。
+
+## 通知渠道
+
+程序支持两个通知渠道，**配置完整的渠道都会收到消息**，互不影响：
+
+| 渠道 | 需要的配置 | 标题 | 内容 |
+|------|-----------|------|------|
+| Gotify | `GOTIFY_HOST` + `GOTIFY_TOKEN` | 签到成功 / 签到失败 | 站点返回的签到消息 |
+| WXPUSH | `WXPUSH_BASE_URL` + `WXPUSH_USERID` + `WXPUSH_TEMPLATE_ID` | `✓成功` / `×失败` | `获得流量：666MB；执行用时：12s` |
+
+WXPUSH 说明：
+
+- 推送地址、用户 ID、模板 ID 全部通过环境变量传入（本地放 `.env`，GitHub Actions 放 Secrets），仓库内不存放真实值与真实域名；
+- 标题固定为 `✓成功`（签到成功）或 `×失败`（登录/签到失败）；
+- 内容格式为 `获得流量：{流量+单位}；执行用时：{脚本执行用时+单位}`；
+- 流量优先从签到消息中解析，解析不到时回退到账户面板的流量信息；实在拿不到则按 `0MB` 展示。
+
+> 提示：日志中不会打印 `userid` / `template_id` / 推送域名，避免在 CI 日志里泄露。
 
 ## 日志输出示例
 
@@ -78,7 +104,9 @@
 2024-01-15 10:30:15 [INFO] 正在登录...
 2024-01-15 10:30:16 [INFO] 登录成功，正在签到...
 2024-01-15 10:30:17 [INFO] 签到成功：获得 10 积分
-2024-01-15 10:30:17 [INFO] 通知发送成功
+2024-01-15 10:30:17 [INFO] 获得流量：666MB
+2024-01-15 10:30:17 [INFO] WXPUSH 通知发送成功：{"code":0}
+2024-01-15 10:30:17 [INFO] 通知发送成功：wxpush
 2024-01-15 10:30:17 [INFO] 签到完成
 ```
 
@@ -88,7 +116,8 @@
 jikeCheckin/
 ├── main.py              # 主程序入口
 ├── config.py            # 配置管理
-├── notify.py            # 通知模块
+├── notify.py            # 通知模块（Gotify / WXPUSH）
+├── traffic.py           # 流量解析工具
 ├── .env.example         # 配置模板
 ├── requirements.txt     # 依赖清单
 └── .github/workflows/
@@ -109,6 +138,11 @@ schedule:
 ### Q: 如何禁用 Gotify 通知？
 
 不配置 `GOTIFY_HOST` 和 `GOTIFY_TOKEN` 即可，程序会自动跳过通知。
+
+### Q: 如何禁用 WXPUSH 通知？
+
+不配置 `WXPUSH_BASE_URL` / `WXPUSH_USERID` / `WXPUSH_TEMPLATE_ID` 即可，程序会自动跳过通知。
+两个渠道互不影响，只配置其中一个也可以。
 
 ### Q: 签到失败怎么办？
 
