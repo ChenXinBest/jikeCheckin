@@ -69,7 +69,7 @@
 | JIKE_PASSWORD | 极客云密码 | 是 | - |
 | GOTIFY_HOST | Gotify 服务器地址 | 否 | - |
 | GOTIFY_TOKEN | Gotify 应用 Token | 否 | - |
-| WXPUSH_BASE_URL | WXPUSH 推送地址（使用该渠道时必填） | 否 | - |
+| WXPUSH_BASE_URL | WXPUSH 站点域名（接口路径 `/wxsend` 自动拼接） | 否 | - |
 | WXPUSH_USERID | WXPUSH 用户 ID | 否 | - |
 | WXPUSH_TEMPLATE_ID | WXPUSH 模板 ID | 否 | - |
 | JIKE_PROXY | 代理地址，如 `http://127.0.0.1:7890`（直连失败时才需要） | 否 | 直连 |
@@ -89,6 +89,7 @@
 
 WXPUSH 说明：
 
+- `WXPUSH_BASE_URL` 只填站点域名即可，接口路径 `/wxsend` 由程序自动拼接；
 - 推送地址、用户 ID、模板 ID 全部通过环境变量传入（本地放 `.env`，GitHub Actions 放 Secrets），仓库内不存放真实值与真实域名；
 - 标题固定为 `✓成功`（签到成功）或 `×失败`（登录/签到失败）；
 - 内容格式为 `获得流量：{流量+单位}；执行用时：{脚本执行用时+单位}`；

@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 WXPUSH_TITLE_SUCCESS = "✓成功"
 WXPUSH_TITLE_FAILURE = "×失败"
 
+# WXPUSH 接口路径（固定，BASE_URL 只配置站点域名即可）
+WXPUSH_API_PATH = "/wxsend"
+
 # WXPUSH 请求头（部分网关会拦截无浏览器特征的请求）
 WXPUSH_HEADERS = {
     "User-Agent": (
@@ -91,7 +94,7 @@ def send_wxpush(title, content, wxpush_base_url=None, wxpush_userid=None, wxpush
 
     try:
         response = requests.get(
-            wxpush_base_url,
+            build_wxpush_url(wxpush_base_url),
             params=params,
             headers=WXPUSH_HEADERS,
             timeout=WXPUSH_TIMEOUT,
@@ -110,6 +113,24 @@ def send_wxpush(title, content, wxpush_base_url=None, wxpush_userid=None, wxpush
 
     logger.info(f"WXPUSH 通知发送成功：{response.text.strip()[:200]}")
     return True
+
+
+def build_wxpush_url(base_url):
+    """
+    拼接 WXPUSH 请求地址。
+
+    BASE_URL 只需配置站点域名，接口路径 /wxsend 固定，由程序自动拼接。
+
+    Args:
+        base_url (str): 站点地址，如 "https://wxpush.example.com"
+
+    Returns:
+        str: 完整请求地址
+    """
+    url = base_url.strip().rstrip("/")
+    if url.endswith(WXPUSH_API_PATH):
+        return url
+    return f"{url}{WXPUSH_API_PATH}"
 
 
 def _is_wxpush_success(response):
